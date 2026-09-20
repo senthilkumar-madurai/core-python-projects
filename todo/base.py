@@ -13,38 +13,41 @@ class Task:
     id: int = 0
     title: str = ""
     status: Status = Status.PENDING
-    created_at: str = field(default_factory= datetime.now())
-    update_at: str = field(default_factory= datetime.now())
+    created_at: str = field(default_factory= datetime.now)
+    updated_at: str = field(default_factory= datetime.now)
 
     @staticmethod
     def _allowed_fields():
         return ["title", "status"]
     
-class TaskManager(ABC):
+class TasksBase(ABC):
     def __init__(self):
         super().__init__()
 
         self.tasks:dict[int, Task] = {}
 
     @abstractmethod
-    def get_all(self):
+    def get_all(self) -> dict:
         pass
     
     @abstractmethod
-    def get(self):
+    def get(self, id:int) -> Task:
         pass
 
     @abstractmethod
-    def create(self):
+    def create(self, title: str, status: Status) -> tuple[bool, Task]:
         pass
     
     @abstractmethod
-    def update(self):
+    def update(self) -> Task:
         pass
     
     @abstractmethod
-    def delete(self):
+    def delete(self) -> bool:
         pass
 
     def _task_exists(self, task_id: int) -> bool:
         return task_id in self.tasks
+
+class InvalidTaskId(Exception):
+    pass

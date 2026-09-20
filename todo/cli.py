@@ -2,25 +2,6 @@ import base
 import sys
 from main import Todo
 
-class Cli:
-    def __init__(self):
-        super().__init__()
-        
-    def create(self):
-        return super().create()
-
-    def get(self):
-        return super().get()
-    
-    def get_all(self):
-        return super().get_all()
-
-    def update(self):
-        return super().update()
-
-    def delete(self):
-        return super().delete()
-
 if __name__ == "__main__":
     sys_args = sys.argv
     length = len(sys_args)
@@ -37,7 +18,12 @@ if __name__ == "__main__":
                 print("Must provide the title")
             else:
                 title = sys_args[2]
-                todo.create(title=title)    
+                try:
+                    task = todo.create(title=title)
+                    print(f"\n[{task.id}] Task created successfuly....")
+                except Exception as e:
+                    print("Something went Wrong...")  
+                    
         case 'update':
             print("update")
 

@@ -17,8 +17,27 @@ class Task:
     updated_at: str = field(default_factory= datetime.now)
 
     @staticmethod
-    def _allowed_fields():
+    def allowed_fields():
         return ["title", "status"]
+
+    @staticmethod
+    def validate_title(title:str) -> str:
+        title = title.strip()
+        if not title:
+            raise ValueError("Title can't be empty")
+        
+        return title
+
+    @staticmethod
+    def validate_status(status:str) -> Status:
+        status = status.strip().lower()
+        if not status:
+            raise ValueError("Status can't be empty")
+        
+        try:
+            return Status(status)
+        except ValueError:
+            raise ValueError("Invalid Status. Only allowed pending, in_progress, completed.")
     
 class TasksBase(ABC):
     def __init__(self):
@@ -48,6 +67,3 @@ class TasksBase(ABC):
 
     def _task_exists(self, task_id: int) -> bool:
         return task_id in self.tasks
-
-class InvalidTaskId(Exception):
-    pass

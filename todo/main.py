@@ -1,4 +1,5 @@
-from base import Task, TasksBase, Status, InvalidTaskId
+from base import Task, TasksBase, Status
+from datetime import datetime
 
 class TodoAPI(TasksBase):
     def __init__(self):
@@ -6,14 +7,17 @@ class TodoAPI(TasksBase):
 
     def get(self, task_id: int):
         if not self._task_exists(task_id=task_id):
-            raise InvalidTaskId()
+            raise ValueError("Invaild ID. Try again.")
         
         return self.tasks[task_id]
         
     def get_all(self):
-        return self.tasks
+        return list(self.tasks.values())
     
     def create(self, title, status = Status.PENDING):
+        # title = Task.validate_title(title)
+        # status = Task.validate_status(status)
+
         last_id = next(reversed(self.tasks)) if self.tasks else 0
         task_id = last_id + 1
         task = Task(id=task_id, title=title, status=status)
@@ -23,27 +27,27 @@ class TodoAPI(TasksBase):
 
     def update(self, task_id:int, **kwargs):
         if not self._task_exists(task_id=task_id):
-            raise InvalidTaskId()
+            raise ValueError("Invaild ID. Try again.")
 
         updated = False
         task = self.tasks[task_id]
         
-        if(not kwargs):
+        if not kwargs:
             return False, task
         
         for field, value in kwargs.items():
-            if(field not in Task._allowed_fields()):
-                continue
+            if(field not in Task.allowed_fields()):
+                raise ValueError(f"Invalid field [{field}]")
 
             setattr(task, field, value)
             updated = True
 
+        task.updated_at = datetime.now()
         return updated, task
-        
 
     def delete(self, task_id: int):
         if not self._task_exists(task_id=task_id):
-            raise InvalidTaskId()
+            raise ValueError("Invaild ID. Try again.")
 
         self.tasks.pop(task_id)
         return True
@@ -51,11 +55,8 @@ class TodoAPI(TasksBase):
     @staticmethod
     def input_task_details():
         data = {}
-        fields = vars(Task()).keys()
+        fields = Task.allowed_fields()
         for field in fields:
-            if field not in Task._allowed_fields():
-                continue
-            
             data[field] = input(f"Enter the {field} of the Task : ")
 
         return data
@@ -80,7 +81,7 @@ if __name__ == "__main__":
                 print("====\t=======\t========\t============")
                     
                 if(tasks):
-                    for task in tasks.values():
+                    for task in tasks:
                         print(f"{task.id}\t{task.title}\t{task.status.value}\t{task.created_at}")
                 else:
                     print("\t\tNo tasks are found.")
@@ -91,20 +92,20 @@ if __name__ == "__main__":
                     task = todo.get(task_id=task_id)
                     print(f"ID : {task.id}")
                     print(f"Title : {task.title}")
-                    print(f"Status : {task.status}")
+                    print(f"Status : {task.status.value}")
                     print(f"Created At : {task.created_at}")
                     print(f"Updated At : {task.updated_at}")
-                except(ValueError, InvalidTaskId):
-                    print("Invaild ID. Try again.")
+                except ValueError as error:
+                    print(error)
                 except Exception as e:
                     print("Can't get the data")
                     
             case 3:
                 try:
-                    title = input("Enter the title of the Task : ")
-                    status = Status(input("Enter the status of the Task : "))
-                except ValueError:
-                    print("Invalid status")
+                    title = Task.validate_title(input("Enter the title of the Task : "))
+                    status = Task.validate_status(input("Enter the status of the Task : "))
+                except ValueError as error:
+                    print(error)
                     continue
 
                 try:
@@ -116,25 +117,26 @@ if __name__ == "__main__":
                 try:
                     task_id = int(input("Enter the ID of the Task : "))
                     if not todo._task_exists(task_id=task_id):
-                        raise InvalidTaskId()
-                except(ValueError, InvalidTaskId):
-                    print("Invaild ID. Try again.")
+                        raise ValueError("Invaild ID. Try again.")
+                except ValueError as error:
+                    print(error)
                     continue
 
                 try:
-                    title = input("Enter the title of the Task : ")
-                    status = Status(input("Enter the status of the Task : "))
-                except ValueError:
-                    print("Invalid status")
+                    title = Task.validate_title(input("Enter the title of the Task : "))
+                    status = Task.validate_status(input("Enter the status of the Task : "))
+                except ValueError as error:
+                    print(error)
                     continue
+
                 try:
                     updated, task = todo.update(task_id=task_id, title=title, status=status)
                     if(updated):
                         print(f"[{task.id}] Task updated successfuly.")
                     else:
                         print("Nothing to update.")
-                except(InvalidTaskId):
-                    print("Invaild ID. Try again.")
+                except ValueError as error:
+                    print(error)
                 except Exception as e:
                     print("Can't update task.", e)
                     
@@ -144,8 +146,8 @@ if __name__ == "__main__":
                     deleted = todo.delete(id=id)
                     if(deleted):
                        print(f"\n[{task_id}] Task deleted successfuly....")
-                except(ValueError, InvalidTaskId):
-                    print("Invaild ID. Try again.")
+                except ValueError as error:
+                    print(error)
                 except Exception as e:
                     print("Can't delete the task.")
                         
